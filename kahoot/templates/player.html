@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz Oyunu</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="min-h-screen bg-gray-900 text-white">
+  <div class="max-w-3xl mx-auto p-6">
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-extrabold tracking-tight">Kahoot Tarzı Quiz</h1>
+      <span id="me" class="text-sm text-gray-300"></span>
+    </header>
+
+    <section id="join-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-xl font-semibold mb-2">Odaya Katıl</h2>
+      <p class="text-gray-300 mb-4">İsmini yaz ve oyuna katıl.</p>
+      <div class="flex gap-3">
+        <input id="name" type="text" maxlength="24" placeholder="İsim" class="flex-1 px-4 py-3 rounded-xl bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <button id="joinBtn" class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition">Katıl</button>
+      </div>
+    </section>
+
+    <section id="game-section" class="hidden mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg">
+      <div class="flex items-center justify-between">
+        <div>
+          <div id="q-progress" class="text-sm text-gray-400"></div>
+          <h2 id="question" class="text-2xl font-bold mt-1"></h2>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-gray-400">Kalan Süre</div>
+          <div id="timer" class="text-3xl font-extrabold">10</div>
+        </div>
+      </div>
+
+      <div id="options" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+
+      <div id="feedback" class="mt-4 text-sm"></div>
+
+      <div id="leaderboard" class="hidden mt-6"></div>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
