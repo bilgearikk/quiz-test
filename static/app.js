@@ -2,7 +2,6 @@
   const isAdmin = window.location.pathname.includes("/admin");
   const byId = (id) => document.getElementById(id);
 
-  // Robust WebSocket URL
   const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProto}//${location.host}/ws`;
   const ws = new WebSocket(wsUrl);
@@ -24,7 +23,6 @@
     if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
   });
 
-  // Player
   if (!isAdmin) {
     const joinSection = byId('join-section');
     const gameSection = byId('game-section');
@@ -63,6 +61,9 @@
           btn.style.setProperty('--y', (e.clientY - r.top) + 'px');
         };
         btn.onclick = () => {
+          Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.classList.remove('chosen'));
+          btn.classList.add('chosen');
+
           ws.send(JSON.stringify({ type: 'answer', choice: idx }));
           Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
         };
@@ -96,7 +97,13 @@
       reveal: (d) => {
         Array.from(optionsEl.children).forEach((b, i) => {
           b.disabled = true;
-          if (i === d.correct) b.classList.add('correct');
+          const wasChosen = b.classList.contains('chosen'); 
+          b.classList.remove('chosen');                     
+          if (i === d.correct) {
+            b.classList.add('correct');                     
+          } else if (wasChosen) {
+            b.classList.add('wrong');                      
+          }
         });
       },
       leaderboard: (data) => {
@@ -118,7 +125,7 @@
           </ol>
         `;
       },
-      
+
       reset_done: () => {
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
