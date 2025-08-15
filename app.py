@@ -162,9 +162,14 @@ async def end_current_question():
     if STATE.current_q_index + 1 < len(STATE.questions):
         await start_question(STATE.current_q_index + 1)
     else:
-        leaderboard = sorted(((p.name, p.score) for p in STATE.players.values()),
-                             key=lambda x: x[1], reverse=True)
-        await broadcast({"type": "leaderboard", "top3": list(leaderboard)[:3], "all": list(leaderboard)})
+        leaderboard = sorted(
+            ((p.name, p.score) for p in STATE.players.values()),
+            key=lambda x: (-x[1], x[0].lower())
+        )
+        await broadcast({
+            "type": "leaderboard",
+            "all": list(leaderboard)
+        })
 
 @app.get("/", response_class=HTMLResponse)
 async def player_page(request: Request):
