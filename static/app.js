@@ -36,6 +36,8 @@
     const feedbackEl = byId('feedback');
     const leaderboardEl = byId('leaderboard');
 
+    const infoSection = byId('info-section') || byId('tips-section');
+
     let currentExpire = null;
     let countdownInterval = null;
 
@@ -81,12 +83,14 @@
         me.textContent = `Hoş geldin, ${data.name}`;
         joinSection.classList.add('hidden');
         gameSection.classList.remove('hidden');
+        infoSection?.classList.add('hidden');
         feedbackEl.textContent = '';
       },
       question: (data) => {
         qProgress.textContent = `Soru ${data.index + 1} / ${data.q_total}`;
         questionEl.textContent = data.question;
         currentExpire = data.expires_at;
+        infoSection?.classList.add('hidden');
         setTimer();
         feedbackEl.textContent = '';
         leaderboardEl.classList.add('hidden');
