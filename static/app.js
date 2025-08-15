@@ -2,6 +2,7 @@
   const isAdmin = window.location.pathname.includes("/admin");
   const byId = (id) => document.getElementById(id);
 
+  // Robust WebSocket URL
   const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProto}//${location.host}/ws`;
   const ws = new WebSocket(wsUrl);
@@ -23,6 +24,7 @@
     if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
   });
 
+  // Player
   if (!isAdmin) {
     const joinSection = byId('join-section');
     const gameSection = byId('game-section');
@@ -73,21 +75,17 @@
       ws.send(JSON.stringify({ type: 'join', name: nm }));
     });
 
-    const infoSection = document.getElementById('info-section');
-
     ws.addEventListener('message', (event) => handleMessage(event, {
       joined: (data) => {
         me.textContent = `Hoş geldin, ${data.name}`;
         joinSection.classList.add('hidden');
         gameSection.classList.remove('hidden');
-        infoSection?.classList.add('hidden'); 
         feedbackEl.textContent = '';
       },
       question: (data) => {
         qProgress.textContent = `Soru ${data.index + 1} / ${data.q_total}`;
         questionEl.textContent = data.question;
         currentExpire = data.expires_at;
-        infoSection?.classList.add('hidden');
         setTimer();
         feedbackEl.textContent = '';
         leaderboardEl.classList.add('hidden');
@@ -102,23 +100,25 @@
         });
       },
       leaderboard: (data) => {
-      leaderboardEl.classList.remove('hidden');
-      const list = data.all || [];
-      leaderboardEl.innerHTML = `
-        <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
-        <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
-          ${
-            list.map(([name, score], i) => `
-              <li class="flex items-center gap-3">
-                <span class="badge">${i + 1}</span>
-                <span>${name}</span>
-                <span class="ml-auto font-mono">${score} puan</span>
-              </li>
-            `).join('')
-          }
-        </ol>
-      `;
-    },
+        leaderboardEl.classList.remove('hidden');
+        const list = data.all || [];
+
+        leaderboardEl.innerHTML = `
+          <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
+          <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
+            ${
+              list.map(([name, score], i) => `
+                <li class="flex items-center gap-3">
+                  <span class="badge">${i + 1}</span>
+                  <span>${name}</span>
+                  <span class="ml-auto font-mono">${score} puan</span>
+                </li>
+              `).join('')
+            }
+          </ol>
+        `;
+      },
+      
       reset_done: () => {
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
@@ -130,6 +130,7 @@
     }));
   }
 
+  // Admin
   if (isAdmin) {
     const lobby = byId('lobby');
     const qCount = byId('qCount');
