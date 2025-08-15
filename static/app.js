@@ -2,7 +2,6 @@
   const isAdmin = window.location.pathname.includes("/admin");
   const byId = (id) => document.getElementById(id);
 
-  // Robust WebSocket URL
   const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProto}//${location.host}/ws`;
   const ws = new WebSocket(wsUrl);
@@ -24,7 +23,6 @@
     if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
   });
 
-  // Player
   if (!isAdmin) {
     const joinSection = byId('join-section');
     const gameSection = byId('game-section');
@@ -92,7 +90,6 @@
         renderOptions(data.options);
       },
       answer_ack: (d) => {
-        feedbackEl.textContent = d.correct ? `Doğru! Puanın: ${d.score}` : 'Yanlış :(';
       },
       reveal: (d) => {
         Array.from(optionsEl.children).forEach((b, i) => {
@@ -101,15 +98,23 @@
         });
       },
       leaderboard: (data) => {
-        leaderboardEl.classList.remove('hidden');
-        const top = data.top3 || [];
-        leaderboardEl.innerHTML = `
-          <h3 class="text-xl font-bold mb-2">Kazananlar</h3>
-          <ol class="space-y-1">
-            ${top.map((t, i) => `<li class="flex items-center gap-3"><span class="badge">${i+1}</span><span>${t[0]}</span><span class="ml-auto font-mono">${t[1]} puan</span></li>`).join('')}
-          </ol>
-        `;
-      },
+      leaderboardEl.classList.remove('hidden');
+      const list = data.all || data.top3 || [];
+      leaderboardEl.innerHTML = `
+        <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
+        <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
+          ${
+            list.map(([name, score], i) => `
+              <li class="flex items-center gap-3">
+                <span class="badge">${i + 1}</span>
+                <span>${name}</span>
+                <span class="ml-auto font-mono">${score} puan</span>
+              </li>
+            `).join('')
+          }
+        </ol>
+      `;
+    },
       reset_done: () => {
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
@@ -121,7 +126,6 @@
     }));
   }
 
-  // Admin
   if (isAdmin) {
     const lobby = byId('lobby');
     const qCount = byId('qCount');

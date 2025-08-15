@@ -16,11 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-# Static & templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# ---------------------- Game State ----------------------
 class Player:
     def __init__(self, name: str, ws: WebSocket):
         self.name = name
@@ -53,7 +51,6 @@ STATE = QuizState()
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
-# ---------------------- Excel Loader (no pandas) ----------------------
 def load_questions_from_excel(path: str) -> List[dict]:
     """
     Beklenen başlıklar (A1:F1 satırı):
@@ -96,9 +93,7 @@ def load_questions_from_excel(path: str) -> List[dict]:
         raise ValueError("Excel'den geçerli soru bulunamadı.")
     return questions
 
-# ---------------------- Scoring ----------------------
 def score_for_elapsed(elapsed: float) -> int:
-    # 0-3s => 5, 3-5s => 3, 5-10s => 2, >10 => 0
     if elapsed <= 3.0:
         return 5
     elif elapsed <= 5.0:
@@ -107,7 +102,6 @@ def score_for_elapsed(elapsed: float) -> int:
         return 2
     return 0
 
-# ---------------------- Broadcast Helper ----------------------
 async def broadcast(payload: dict):
     """Send to all players and admins. Always JSON-encoded."""
     text = json.dumps(payload)
@@ -131,7 +125,6 @@ async def broadcast(payload: dict):
     for a in dead_admins:
         STATE.admins.discard(a)
 
-# ---------------------- Quiz Flow ----------------------
 async def start_question(index: int):
     STATE.current_q_index = index
     STATE.accepting = True
@@ -147,7 +140,7 @@ async def start_question(index: int):
         "q_total": len(STATE.questions),
         "question": q["question"],
         "options": q["options"],
-        "expires_at": expires_at,  # epoch seconds UTC
+        "expires_at": expires_at,  
     })
 
     asyncio.create_task(end_question_after_delay(STATE.q_duration_sec))
@@ -173,7 +166,6 @@ async def end_current_question():
                              key=lambda x: x[1], reverse=True)
         await broadcast({"type": "leaderboard", "top3": list(leaderboard)[:3], "all": list(leaderboard)})
 
-# ---------------------- HTTP Pages ----------------------
 @app.get("/", response_class=HTMLResponse)
 async def player_page(request: Request):
     return templates.TemplateResponse("player.html", {"request": request})
@@ -186,7 +178,6 @@ async def admin_page(request: Request):
 async def health():
     return JSONResponse({"ok": True})
 
-# ---------------------- WebSocket ----------------------
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
@@ -202,14 +193,12 @@ async def websocket_endpoint(ws: WebSocket):
 
             mtype = msg.get("type")
 
-            # players
             if mtype == "join":
                 name = (msg.get("name") or f"Player-{pid[-4:]}").strip()[:24]
                 STATE.players[pid] = Player(name=name, ws=ws)
                 await broadcast({"type": "lobby", "players": [p.name for p in STATE.players.values()]})
                 await ws.send_text(json.dumps({"type": "joined", "name": name}))
 
-            # admin
             elif mtype == "admin":
                 STATE.admins.add(ws)
                 await ws.send_text(json.dumps({
