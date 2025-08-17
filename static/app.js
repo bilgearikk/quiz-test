@@ -41,18 +41,6 @@
     let currentExpire = null;
     let countdownInterval = null;
 
-    let winnerShown = false;
-
-    function runConfetti(duration = 4000){
-      if (!window.confetti) return;        // kütüphane yüklenmemişse sessiz çık
-      const end = Date.now() + duration;
-      (function frame(){
-        confetti({ particleCount: 2, angle: 60,  spread: 55, origin: { x: 0 },   });
-        confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 },   });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-    }
-
     function setTimer() {
       if (!currentExpire) return;
       clearInterval(countdownInterval);
@@ -126,22 +114,6 @@
         leaderboardEl.classList.remove('hidden');
         const list = data.all || [];
 
-        if (list.length && !winnerShown) {
-          winnerShown = true;
-          const [winnerName] = list[0];
-
-          const banner = byId('winner-banner');
-          const nameEl = byId('winner-name');
-          if (banner && nameEl) {
-            nameEl.textContent = winnerName;
-            banner.classList.remove('hidden');
-            runConfetti(4500);
-            setTimeout(() => banner.classList.add('hidden'), 5000);
-          } else {
-            runConfetti(4500); 
-          }
-        }
-
         leaderboardEl.innerHTML = `
           <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
           <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
@@ -159,8 +131,6 @@
       },
 
       reset_done: () => {
-        winnerShown = false;
-        byId('winner-banner')?.classList.add('hidden');
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
         questionEl.textContent = '';
@@ -168,7 +138,6 @@
         timerEl.textContent = '10';
         leaderboardEl.classList.add('hidden');
       },
-
     }));
   }
 
