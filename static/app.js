@@ -23,6 +23,7 @@
     if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
   });
 
+  // ================= PLAYER =================
   if (!isAdmin) {
     const joinSection = byId('join-section');
     const gameSection = byId('game-section');
@@ -35,8 +36,22 @@
     const optionsEl = byId('options');
     const feedbackEl = byId('feedback');
     const leaderboardEl = byId('leaderboard');
-
     const infoSection = byId('info-section') || byId('tips-section');
+
+    // Winner UI
+    const winnerBanner = byId('winner-banner');
+    const winnerNameEl = byId('winner-name');
+    let winnerShown = false;
+
+    function runConfetti(duration = 4500){
+      if (!window.confetti) return;
+      const end = Date.now() + duration;
+      (function frame(){
+        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 } });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+    }
 
     let currentExpire = null;
     let countdownInterval = null;
@@ -51,24 +66,27 @@
         if (left <= 0) clearInterval(countdownInterval);
       }, 200);
     }
+
     function renderOptions(options) {
       optionsEl.innerHTML = '';
       options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.textContent = opt;
+
         btn.onmousemove = (e) => {
           const r = e.currentTarget.getBoundingClientRect();
           btn.style.setProperty('--x', (e.clientX - r.left) + 'px');
           btn.style.setProperty('--y', (e.clientY - r.top) + 'px');
         };
+
         btn.onclick = () => {
           Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.classList.remove('chosen'));
           btn.classList.add('chosen');
-
           ws.send(JSON.stringify({ type: 'answer', choice: idx }));
           Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
         };
+
         optionsEl.appendChild(btn);
       });
     }
@@ -78,41 +96,65 @@
       ws.send(JSON.stringify({ type: 'join', name: nm }));
     });
 
+    // enter ile katılma
+    nameInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') joinBtn?.click();
+    });
+
     ws.addEventListener('message', (event) => handleMessage(event, {
       joined: (data) => {
         me.textContent = `Hoş geldin, ${data.name}`;
         joinSection.classList.add('hidden');
         gameSection.classList.remove('hidden');
-        infoSection?.classList.add('hidden');
+        infoSection?.classList.add('hidden');   // bilgi kutusunu gizle
         feedbackEl.textContent = '';
       },
+
       question: (data) => {
         qProgress.textContent = `Soru ${data.index + 1} / ${data.q_total}`;
         questionEl.textContent = data.question;
         currentExpire = data.expires_at;
-        infoSection?.classList.add('hidden');
+        infoSection?.classList.add('hidden');   // oyun başlayınca gizli kalsın
         setTimer();
         feedbackEl.textContent = '';
         leaderboardEl.classList.add('hidden');
         renderOptions(data.options);
       },
-      answer_ack: (d) => {
+
+      answer_ack: (_d) => {
+        // bireysel geri bildirim göstermek istemiyorsak boş bırakıyoruz
       },
+
       reveal: (d) => {
         Array.from(optionsEl.children).forEach((b, i) => {
           b.disabled = true;
-          const wasChosen = b.classList.contains('chosen'); 
-          b.classList.remove('chosen');                     
+          const wasChosen = b.classList.contains('chosen');
+          b.classList.remove('chosen');
           if (i === d.correct) {
-            b.classList.add('correct');                     
+            b.classList.add('correct');
           } else if (wasChosen) {
-            b.classList.add('wrong');                      
+            b.classList.add('wrong');
           }
         });
       },
+
       leaderboard: (data) => {
         leaderboardEl.classList.remove('hidden');
         const list = data.all || [];
+
+        // Birincinin kutlamasını 1 kez göster
+        if (list.length && !winnerShown) {
+          winnerShown = true;
+          const [firstName] = list[0]; // [isim, skor]
+          if (winnerBanner && winnerNameEl) {
+            winnerNameEl.textContent = firstName;
+            winnerBanner.classList.remove('hidden');
+            runConfetti(4500);
+            setTimeout(() => winnerBanner.classList.add('hidden'), 5200);
+          } else {
+            runConfetti(4500);
+          }
+        }
 
         leaderboardEl.innerHTML = `
           <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
@@ -131,6 +173,10 @@
       },
 
       reset_done: () => {
+        // yeni oyun için sıfırla
+        winnerShown = false;
+        winnerBanner?.classList.add('hidden');
+
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
         questionEl.textContent = '';
@@ -141,7 +187,7 @@
     }));
   }
 
-  // Admin
+  // ================= ADMIN =================
   if (isAdmin) {
     const lobby = byId('lobby');
     const qCount = byId('qCount');
@@ -157,21 +203,28 @@
     });
 
     function renderLobby(list) {
+      if (!lobby) return;
       lobby.innerHTML = list.map(n => `<li class="px-3 py-2 bg-gray-700 rounded-lg">${n}</li>`).join('');
     }
 
-    loadBtn.addEventListener('click', () => {
-      ws.send(JSON.stringify({ type: 'load_questions', path: excelPath.value.trim() || 'questions.xlsx' }));
+    loadBtn?.addEventListener('click', () => {
+      ws.send(JSON.stringify({ type: 'load_questions', path: (excelPath?.value.trim() || 'questions.xlsx') }));
     });
-    startBtn.addEventListener('click', () => ws.send(JSON.stringify({ type: 'start_quiz' })));
-    nextBtn.addEventListener('click', () => ws.send(JSON.stringify({ type: 'next' })));
-    resetBtn.addEventListener('click', () => ws.send(JSON.stringify({ type: 'reset' })));
+    startBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'start_quiz' })));
+    nextBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'next' })));
+    resetBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'reset' })));
 
     ws.addEventListener('message', (event) => handleMessage(event, {
-      admin_ack: (d) => { renderLobby(d.players || []); qCount.textContent = `Soru sayısı: ${d.q_count || 0}`; },
+      admin_ack: (d) => {
+        renderLobby(d.players || []);
+        if (qCount) qCount.textContent = `Soru sayısı: ${d.q_count || 0}`;
+      },
       lobby: (d) => renderLobby(d.players || []),
-      questions_loaded: (d) => { qCount.textContent = `Soru sayısı: ${d.count}`; loadInfo.textContent = `Yüklendi (${d.count}).`; },
-      error: (d) => { loadInfo.textContent = `Hata: ${d.message}`; },
+      questions_loaded: (d) => {
+        if (qCount) qCount.textContent = `Soru sayısı: ${d.count}`;
+        if (loadInfo) loadInfo.textContent = `Yüklendi (${d.count}).`;
+      },
+      error: (d) => { if (loadInfo) loadInfo.textContent = `Hata: ${d.message}`; },
     }));
   }
 })();

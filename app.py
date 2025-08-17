@@ -19,12 +19,14 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
 class Player:
     def __init__(self, name: str, ws: WebSocket):
         self.name = name
         self.ws = ws
         self.score = 0
         self.answered_for_q: Dict[int, bool] = {}
+
 
 class QuizState:
     def __init__(self):
@@ -46,14 +48,17 @@ class QuizState:
         self.round_active = False
         self.q_started_at = None
 
+
 STATE = QuizState()
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
+
 def load_questions_from_excel(path: str) -> List[dict]:
     """
-    Beklenen başlıklar (A1:F1 satırı):
+    Beklenen başlıklar (A1:F1):
       question | option1 | option2 | option3 | option4 | correct_index
     correct_index 0-3 arasında olmalı.
     """
@@ -93,7 +98,9 @@ def load_questions_from_excel(path: str) -> List[dict]:
         raise ValueError("Excel'den geçerli soru bulunamadı.")
     return questions
 
+
 def score_for_elapsed(elapsed: float) -> int:
+    # 0-3s => 5, 3-5s => 3, 5-10s => 2, >10 => 0
     if elapsed <= 3.0:
         return 5
     elif elapsed <= 5.0:
@@ -102,8 +109,9 @@ def score_for_elapsed(elapsed: float) -> int:
         return 2
     return 0
 
+
 async def broadcast(payload: dict):
-    """Send to all players and admins. Always JSON-encoded."""
+    """Tüm oyuncu ve adminlere JSON mesaj yayınla."""
     text = json.dumps(payload)
     dead_pids: List[str] = []
     for pid, p in list(STATE.players.items()):
@@ -125,6 +133,7 @@ async def broadcast(payload: dict):
     for a in dead_admins:
         STATE.admins.discard(a)
 
+
 async def start_question(index: int):
     STATE.current_q_index = index
     STATE.accepting = True
@@ -140,14 +149,16 @@ async def start_question(index: int):
         "q_total": len(STATE.questions),
         "question": q["question"],
         "options": q["options"],
-        "expires_at": expires_at,  
+        "expires_at": expires_at,
     })
 
     asyncio.create_task(end_question_after_delay(STATE.q_duration_sec))
 
+
 async def end_question_after_delay(delay: int):
     await asyncio.sleep(delay)
     await end_current_question()
+
 
 async def end_current_question():
     if not STATE.round_active:
@@ -162,6 +173,7 @@ async def end_current_question():
     if STATE.current_q_index + 1 < len(STATE.questions):
         await start_question(STATE.current_q_index + 1)
     else:
+        # Oyun bitti: tüm oyuncuları skora göre sırala ve yayınla
         leaderboard = sorted(
             ((p.name, p.score) for p in STATE.players.values()),
             key=lambda x: (-x[1], x[0].lower())
@@ -171,17 +183,21 @@ async def end_current_question():
             "all": list(leaderboard)
         })
 
+
 @app.get("/", response_class=HTMLResponse)
 async def player_page(request: Request):
     return templates.TemplateResponse("player.html", {"request": request})
+
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})
 
+
 @app.get("/api/health")
 async def health():
     return JSONResponse({"ok": True})
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):

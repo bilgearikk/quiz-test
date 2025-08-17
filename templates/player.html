@@ -14,35 +14,36 @@
       <span id="me" class="text-sm text-gray-300"></span>
     </header>
 
+    <!-- Katılım -->
     <section id="join-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg">
       <h2 class="text-xl font-semibold mb-2">Odaya Katıl</h2>
       <p class="text-gray-300 mb-4">İsmini yaz ve oyuna katıl.</p>
       <div class="flex gap-3">
-        <input id="name" type="text" maxlength="24" placeholder="İsim" class="flex-1 px-4 py-3 rounded-xl bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <input id="name" type="text" maxlength="24" placeholder="İsim"
+               class="flex-1 px-4 py-3 rounded-xl bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         <button id="joinBtn" class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition">Katıl</button>
       </div>
     </section>
 
-<section id="info-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg mt-6">
-  <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11 10h2v7h-2v-7zm1-6a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/>
-    </svg>
-    Önemli
-  </h2>
+    <!-- Bilgi kutusu -->
+    <section id="info-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg mt-6">
+      <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11 10h2v7h-2v-7zm1-6a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"/>
+        </svg>
+        Önemli
+      </h2>
+      <div class="text-gray-300">
+        <div class="font-semibold">Hız puan kazandırır!</div>
+        <ul class="list-none mt-2 space-y-1">
+          <li>- 0–3 sn: <strong>5 puan</strong></li>
+          <li>- 3–5 sn: <strong>3 puan</strong></li>
+          <li>- 5–10 sn: <strong>2 puan</strong></li>
+        </ul>
+      </div>
+    </section>
 
-  <div class="text-gray-300">
-    <div class="font-semibold">Hız puan kazandırır!</div>
-    <ul class="list-none mt-2 space-y-1">
-      <li>- 0–3 sn: <strong>5 puan</strong></li>
-      <li>- 3–5 sn: <strong>3 puan</strong></li>
-      <li>- 5–10 sn: <strong>2 puan</strong></li>
-    </ul>
-  </div>
-</section>
- 
-
-
+    <!-- Oyun alanı -->
     <section id="game-section" class="hidden mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg">
       <div class="flex items-center justify-between">
         <div>
@@ -59,10 +60,21 @@
 
       <div id="feedback" class="mt-4 text-sm"></div>
 
+      <!-- Tek bir skor tablosu konteyneri -->
       <div id="leaderboard" class="hidden mt-6"></div>
     </section>
   </div>
 
+  <!-- Winner overlay (konfeti) -->
+  <div id="winner-banner" class="winner-banner hidden">
+    <div class="banner-card">
+      <div class="title">Birinci</div>
+      <div id="winner-name" class="name">—</div>
+    </div>
+  </div>
+
+  <!-- konfeti kütüphanesi: app.js'ten önce -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
