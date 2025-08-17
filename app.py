@@ -173,14 +173,15 @@ async def end_current_question():
     if STATE.current_q_index + 1 < len(STATE.questions):
         await start_question(STATE.current_q_index + 1)
     else:
-        # Oyun bitti: tüm oyuncuları skora göre sırala ve yayınla
+        # Oyun bitti: tüm oyuncuları puana göre sırala (puan desc, isim asc)
         leaderboard = sorted(
             ((p.name, p.score) for p in STATE.players.values()),
             key=lambda x: (-x[1], x[0].lower())
         )
         await broadcast({
             "type": "leaderboard",
-            "all": list(leaderboard)
+            "all": list(leaderboard),
+            "game_over": True  # <— sadece finalde geliyor; ön yüzde bununla kazanan gösterilecek
         })
 
 
