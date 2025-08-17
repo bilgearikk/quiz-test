@@ -15,7 +15,6 @@ logger = logging.getLogger("quiz")
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -52,43 +51,22 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 def load_questions_from_excel(path: str) -> List[dict]:
-    """
-    Beklenen başlıklar (A1:F1 satırı):
-      question | option1 | option2 | option3 | option4 | correct_index
-    correct_index 0-3 arasında olmalı.
-    """
     wb = load_workbook(filename=path, read_only=True, data_only=True)
     ws = wb.active
     rows = list(ws.iter_rows(values_only=True))
-    if not rows:
-        raise ValueError("Excel boş görünüyor.")
     headers = [str(h or "").strip().lower() for h in rows[0]]
     required = ["question", "option1", "option2", "option3", "option4", "correct_index"]
-    if any(col not in headers for col in required):
-        raise ValueError(f"Excel başlıkları eksik. Gerekli: {required}")
-
     hidx = {h: headers.index(h) for h in required}
     questions: List[dict] = []
     for r in rows[1:]:
-        if not r or all(v is None for v in r):
-            continue
         try:
             q_text = str(r[hidx["question"]] or "").strip()
-            opts = [
-                str(r[hidx["option1"]] or "").strip(),
-                str(r[hidx["option2"]] or "").strip(),
-                str(r[hidx["option3"]] or "").strip(),
-                str(r[hidx["option4"]] or "").strip(),
-            ]
-            cidx_raw = r[hidx["correct_index"]]
-            cidx = int(cidx_raw) if cidx_raw is not None else 0
-            cidx = max(0, min(3, cidx))
-            if not q_text or any(opt == "" for opt in opts):
-                continue
-            questions.append({"question": q_text, "options": opts, "correct": cidx})
+            opts = [str(r[hidx[f"option{i+1}"]] or "").strip() for i in range(4)]
+            cidx = max(0, min(3, int(r[hidx["correct_index"]] or 0)))
+            if q_text and all(opts):
+                questions.append({"question": q_text, "options": opts, "correct": cidx})
         except Exception as e:
             logger.warning("Excel satırı atlandı: %s", e)
-            continue
     if not questions:
         raise ValueError("Excel'den geçerli soru bulunamadı.")
     return questions
@@ -103,24 +81,21 @@ def score_for_elapsed(elapsed: float) -> int:
     return 0
 
 async def broadcast(payload: dict):
-    """Send to all players and admins. Always JSON-encoded."""
     text = json.dumps(payload)
-    dead_pids: List[str] = []
-    for pid, p in list(STATE.players.items()):
+    dead_pids = []
+    for pid, p in STATE.players.items():
         try:
             await p.ws.send_text(text)
-        except Exception as e:
-            logger.warning("broadcast to player failed: %s", e)
+        except:
             dead_pids.append(pid)
     for pid in dead_pids:
         STATE.players.pop(pid, None)
 
-    dead_admins: List[WebSocket] = []
-    for a in list(STATE.admins):
+    dead_admins = []
+    for a in STATE.admins:
         try:
             await a.send_text(text)
-        except Exception as e:
-            logger.warning("broadcast to admin failed: %s", e)
+        except:
             dead_admins.append(a)
     for a in dead_admins:
         STATE.admins.discard(a)
@@ -130,7 +105,6 @@ async def start_question(index: int):
     STATE.accepting = True
     STATE.round_active = True
     STATE.q_started_at = utc_now()
-
     q = STATE.questions[index]
     expires_at = STATE.q_started_at.timestamp() + STATE.q_duration_sec
 
@@ -140,7 +114,7 @@ async def start_question(index: int):
         "q_total": len(STATE.questions),
         "question": q["question"],
         "options": q["options"],
-        "expires_at": expires_at,  
+        "expires_at": expires_at,
     })
 
     asyncio.create_task(end_question_after_delay(STATE.q_duration_sec))
@@ -166,10 +140,13 @@ async def end_current_question():
             ((p.name, p.score) for p in STATE.players.values()),
             key=lambda x: (-x[1], x[0].lower())
         )
-        await broadcast({
-            "type": "leaderboard",
-            "all": list(leaderboard)
-        })
+        await broadcast({"type": "leaderboard", "all": list(leaderboard)})
+
+async def check_all_answered():
+    if not STATE.accepting or STATE.current_q_index < 0:
+        return
+    if all(p.answered_for_q.get(STATE.current_q_index) for p in STATE.players.values()):
+        await end_current_question()
 
 @app.get("/", response_class=HTMLResponse)
 async def player_page(request: Request):
@@ -192,8 +169,7 @@ async def websocket_endpoint(ws: WebSocket):
             raw = await ws.receive_text()
             try:
                 msg = json.loads(raw)
-            except json.JSONDecodeError:
-                logger.warning("non-json message from client: %s", raw[:60])
+            except:
                 continue
 
             mtype = msg.get("type")
@@ -231,14 +207,12 @@ async def websocket_endpoint(ws: WebSocket):
                 if not STATE.accepting or STATE.current_q_index < 0:
                     continue
                 player = STATE.players.get(pid)
-                if not player:
-                    continue
-                if player.answered_for_q.get(STATE.current_q_index):
+                if not player or player.answered_for_q.get(STATE.current_q_index):
                     continue
 
                 try:
                     chosen = int(msg.get("choice", -1))
-                except Exception:
+                except:
                     chosen = -1
 
                 q = STATE.questions[STATE.current_q_index]
@@ -253,6 +227,8 @@ async def websocket_endpoint(ws: WebSocket):
                     "score": player.score,
                 }))
 
+                await check_all_answered()
+
             elif mtype == "next":
                 await end_current_question()
 
@@ -264,5 +240,3 @@ async def websocket_endpoint(ws: WebSocket):
         STATE.players.pop(pid, None)
         STATE.admins.discard(ws)
         await broadcast({"type": "lobby", "players": [p.name for p in STATE.players.values()]})
-    except Exception as e:
-        logger.exception("websocket error: %s", e)

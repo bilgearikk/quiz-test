@@ -10,6 +10,7 @@
     try { return JSON.parse(data); }
     catch { return null; }
   }
+
   function handleMessage(event, handlers) {
     const parsed = safeParse(event.data);
     if (!parsed || !parsed.type) return;
@@ -35,7 +36,6 @@
     const optionsEl = byId('options');
     const feedbackEl = byId('feedback');
     const leaderboardEl = byId('leaderboard');
-
     const infoSection = byId('info-section') || byId('tips-section');
 
     let currentExpire = null;
@@ -48,9 +48,13 @@
         const now = Date.now() / 1000;
         const left = Math.max(0, Math.ceil(currentExpire - now));
         timerEl.textContent = left.toString();
-        if (left <= 0) clearInterval(countdownInterval);
+        if (left <= 0) {
+          clearInterval(countdownInterval);
+          optionsEl.querySelectorAll('button').forEach(b => b.disabled = true);
+        }
       }, 200);
     }
+
     function renderOptions(options) {
       optionsEl.innerHTML = '';
       options.forEach((opt, idx) => {
@@ -68,6 +72,7 @@
 
           ws.send(JSON.stringify({ type: 'answer', choice: idx }));
           Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
+          clearInterval(countdownInterval); // Süreyi durdur
         };
         optionsEl.appendChild(btn);
       });
@@ -97,23 +102,23 @@
         renderOptions(data.options);
       },
       answer_ack: (d) => {
+        // İsteğe bağlı: geri bildirim gösterilebilir
       },
       reveal: (d) => {
         Array.from(optionsEl.children).forEach((b, i) => {
           b.disabled = true;
-          const wasChosen = b.classList.contains('chosen'); 
-          b.classList.remove('chosen');                     
+          const wasChosen = b.classList.contains('chosen');
+          b.classList.remove('chosen');
           if (i === d.correct) {
-            b.classList.add('correct');                     
+            b.classList.add('correct');
           } else if (wasChosen) {
-            b.classList.add('wrong');                      
+            b.classList.add('wrong');
           }
         });
       },
       leaderboard: (data) => {
         leaderboardEl.classList.remove('hidden');
         const list = data.all || [];
-
         leaderboardEl.innerHTML = `
           <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
           <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
@@ -129,7 +134,6 @@
           </ol>
         `;
       },
-
       reset_done: () => {
         feedbackEl.textContent = '';
         optionsEl.innerHTML = '';
@@ -141,7 +145,7 @@
     }));
   }
 
-  // Admin
+  // Admin tarafı
   if (isAdmin) {
     const lobby = byId('lobby');
     const qCount = byId('qCount');
@@ -168,10 +172,18 @@
     resetBtn.addEventListener('click', () => ws.send(JSON.stringify({ type: 'reset' })));
 
     ws.addEventListener('message', (event) => handleMessage(event, {
-      admin_ack: (d) => { renderLobby(d.players || []); qCount.textContent = `Soru sayısı: ${d.q_count || 0}`; },
+      admin_ack: (d) => {
+        renderLobby(d.players || []);
+        qCount.textContent = `Soru sayısı: ${d.q_count || 0}`;
+      },
       lobby: (d) => renderLobby(d.players || []),
-      questions_loaded: (d) => { qCount.textContent = `Soru sayısı: ${d.count}`; loadInfo.textContent = `Yüklendi (${d.count}).`; },
-      error: (d) => { loadInfo.textContent = `Hata: ${d.message}`; },
+      questions_loaded: (d) => {
+        qCount.textContent = `Soru sayısı: ${d.count}`;
+        loadInfo.textContent = `Yüklendi (${d.count}).`;
+      },
+      error: (d) => {
+        loadInfo.textContent = `Hata: ${d.message}`;
+      },
     }));
   }
 })();
