@@ -26,6 +26,7 @@ class Player:
         self.ws = ws
         self.score = 0
         self.answered_for_q: Dict[int, bool] = {}
+        self.connected = True  # Bağlantı durumu takibi
 
 
 class QuizState:
@@ -38,6 +39,8 @@ class QuizState:
         self.q_started_at: Optional[datetime] = None
         self.q_duration_sec: int = 10
         self.round_active: bool = False
+        self.current_task: Optional[asyncio.Task] = None  # Task takibi
+        self.lock = asyncio.Lock()  # Thread safety için
 
     def soft_reset(self):
         for p in self.players.values():
@@ -47,6 +50,10 @@ class QuizState:
         self.accepting = False
         self.round_active = False
         self.q_started_at = None
+        # Mevcut task'ı iptal et
+        if self.current_task and not self.current_task.done():
+            self.current_task.cancel()
+        self.current_task = None
 
 
 STATE = QuizState()
@@ -111,18 +118,25 @@ def score_for_elapsed(elapsed: float) -> int:
 
 
 async def broadcast(payload: dict):
-    """Tüm oyuncu ve adminlere JSON mesaj yayınla."""
+    """Tüm oyuncu ve adminlere JSON mesaj yayınla - bağlantı kontrolü ile."""
     text = json.dumps(payload)
+    
+    # Oyunculara gönder
     dead_pids: List[str] = []
     for pid, p in list(STATE.players.items()):
         try:
-            await p.ws.send_text(text)
+            if p.connected:
+                await p.ws.send_text(text)
         except Exception as e:
-            logger.warning("broadcast to player failed: %s", e)
+            logger.warning(f"broadcast to player {p.name} failed: %s", e)
+            p.connected = False
             dead_pids.append(pid)
+    
+    # Ölü bağlantıları temizle
     for pid in dead_pids:
         STATE.players.pop(pid, None)
 
+    # Adminlere gönder
     dead_admins: List[WebSocket] = []
     for a in list(STATE.admins):
         try:
@@ -130,59 +144,88 @@ async def broadcast(payload: dict):
         except Exception as e:
             logger.warning("broadcast to admin failed: %s", e)
             dead_admins.append(a)
+    
+    # Ölü admin bağlantılarını temizle
     for a in dead_admins:
         STATE.admins.discard(a)
 
 
 async def start_question(index: int):
-    STATE.current_q_index = index
-    STATE.accepting = True
-    STATE.round_active = True
-    STATE.q_started_at = utc_now()
+    """Thread-safe soru başlatma"""
+    async with STATE.lock:
+        # Önceki task'ı iptal et
+        if STATE.current_task and not STATE.current_task.done():
+            STATE.current_task.cancel()
+            try:
+                await STATE.current_task
+            except asyncio.CancelledError:
+                pass
 
-    q = STATE.questions[index]
-    expires_at = STATE.q_started_at.timestamp() + STATE.q_duration_sec
+        STATE.current_q_index = index
+        STATE.accepting = True
+        STATE.round_active = True
+        STATE.q_started_at = utc_now()
 
-    await broadcast({
-        "type": "question",
-        "index": index,
-        "q_total": len(STATE.questions),
-        "question": q["question"],
-        "options": q["options"],
-        "expires_at": expires_at,
-    })
+        q = STATE.questions[index]
+        expires_at = STATE.q_started_at.timestamp() + STATE.q_duration_sec
 
-    asyncio.create_task(end_question_after_delay(STATE.q_duration_sec))
+        await broadcast({
+            "type": "question",
+            "index": index,
+            "q_total": len(STATE.questions),
+            "question": q["question"],
+            "options": q["options"],
+            "expires_at": expires_at,
+        })
+
+        # Yeni task oluştur
+        STATE.current_task = asyncio.create_task(end_question_after_delay(STATE.q_duration_sec))
 
 
 async def end_question_after_delay(delay: int):
-    await asyncio.sleep(delay)
-    await end_current_question()
+    """Belirli süre sonra soruyu bitir"""
+    try:
+        await asyncio.sleep(delay)
+        await end_current_question()
+    except asyncio.CancelledError:
+        logger.info("Question timer cancelled")
+        raise
 
 
 async def end_current_question():
-    if not STATE.round_active:
-        return
-    STATE.accepting = False
-    STATE.round_active = False
+    """Mevcut soruyu bitir"""
+    async with STATE.lock:
+        if not STATE.round_active:
+            return
+        
+        STATE.accepting = False
+        STATE.round_active = False
 
-    q = STATE.questions[STATE.current_q_index]
-    await broadcast({"type": "reveal", "index": STATE.current_q_index, "correct": q["correct"]})
-    await asyncio.sleep(2)
+        if STATE.current_q_index >= 0 and STATE.current_q_index < len(STATE.questions):
+            q = STATE.questions[STATE.current_q_index]
+            await broadcast({
+                "type": "reveal", 
+                "index": STATE.current_q_index, 
+                "correct": q["correct"]
+            })
+            
+            # Kısa bekleme
+            await asyncio.sleep(2)
 
-    if STATE.current_q_index + 1 < len(STATE.questions):
-        await start_question(STATE.current_q_index + 1)
-    else:
-        # Oyun bitti: tüm oyuncuları puana göre sırala (puan desc, isim asc)
-        leaderboard = sorted(
-            ((p.name, p.score) for p in STATE.players.values()),
-            key=lambda x: (-x[1], x[0].lower())
-        )
-        await broadcast({
-            "type": "leaderboard",
-            "all": list(leaderboard),
-            "game_over": True  # <— sadece finalde geliyor; ön yüzde bununla kazanan gösterilecek
-        })
+            if STATE.current_q_index + 1 < len(STATE.questions):
+                # Bir sonraki soruyu başlat
+                await start_question(STATE.current_q_index + 1)
+            else:
+                # Oyun bitti: tüm oyuncuları puana göre sırala
+                leaderboard = sorted(
+                    ((p.name, p.score) for p in STATE.players.values() if p.connected),
+                    key=lambda x: (-x[1], x[0].lower())
+                )
+                await broadcast({
+                    "type": "leaderboard",
+                    "all": list(leaderboard),
+                    "game_over": True
+                })
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -204,6 +247,8 @@ async def health():
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     pid = hex(id(ws))
+    player = None
+    
     try:
         while True:
             raw = await ws.receive_text()
@@ -217,15 +262,20 @@ async def websocket_endpoint(ws: WebSocket):
 
             if mtype == "join":
                 name = (msg.get("name") or f"Player-{pid[-4:]}").strip()[:24]
-                STATE.players[pid] = Player(name=name, ws=ws)
-                await broadcast({"type": "lobby", "players": [p.name for p in STATE.players.values()]})
+                player = Player(name=name, ws=ws)
+                STATE.players[pid] = player
+                
+                await broadcast({
+                    "type": "lobby", 
+                    "players": [p.name for p in STATE.players.values() if p.connected]
+                })
                 await ws.send_text(json.dumps({"type": "joined", "name": name}))
 
             elif mtype == "admin":
                 STATE.admins.add(ws)
                 await ws.send_text(json.dumps({
                     "type": "admin_ack",
-                    "players": [p.name for p in STATE.players.values()],
+                    "players": [p.name for p in STATE.players.values() if p.connected],
                     "q_count": len(STATE.questions),
                 }))
 
@@ -239,35 +289,51 @@ async def websocket_endpoint(ws: WebSocket):
 
             elif mtype == "start_quiz":
                 if not STATE.questions:
-                    await ws.send_text(json.dumps({"type": "error", "message": "Önce Excel'den soruları yükleyin."}))
+                    await ws.send_text(json.dumps({
+                        "type": "error", 
+                        "message": "Önce Excel'den soruları yükleyin."
+                    }))
                 else:
                     STATE.soft_reset()
                     await start_question(0)
 
             elif mtype == "answer":
+                # Cevap kontrolü - güvenlik önlemleri
                 if not STATE.accepting or STATE.current_q_index < 0:
                     continue
-                player = STATE.players.get(pid)
-                if not player:
+                    
+                current_player = STATE.players.get(pid)
+                if not current_player or not current_player.connected:
                     continue
-                if player.answered_for_q.get(STATE.current_q_index):
+                    
+                # Bu soru için zaten cevapladı mı?
+                if current_player.answered_for_q.get(STATE.current_q_index):
                     continue
 
                 try:
                     chosen = int(msg.get("choice", -1))
+                    if chosen < 0 or chosen > 3:  # Geçersiz seçim
+                        continue
                 except Exception:
-                    chosen = -1
+                    continue
 
                 q = STATE.questions[STATE.current_q_index]
                 elapsed = (utc_now() - STATE.q_started_at).total_seconds() if STATE.q_started_at else 999
-                if chosen == q["correct"] and elapsed <= STATE.q_duration_sec:
-                    player.score += score_for_elapsed(elapsed)
-                player.answered_for_q[STATE.current_q_index] = True
+                
+                # Süre kontrolü
+                if elapsed > STATE.q_duration_sec:
+                    continue
+                
+                # Puan hesapla
+                if chosen == q["correct"]:
+                    current_player.score += score_for_elapsed(elapsed)
+                
+                current_player.answered_for_q[STATE.current_q_index] = True
 
                 await ws.send_text(json.dumps({
                     "type": "answer_ack",
                     "correct": chosen == q["correct"],
-                    "score": player.score,
+                    "score": current_player.score,
                 }))
 
             elif mtype == "next":
@@ -278,8 +344,18 @@ async def websocket_endpoint(ws: WebSocket):
                 await broadcast({"type": "reset_done"})
 
     except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: {pid}")
+    except Exception as e:
+        logger.exception(f"WebSocket error for {pid}: %s", e)
+    finally:
+        # Temizlik işlemleri
+        if player:
+            player.connected = False
         STATE.players.pop(pid, None)
         STATE.admins.discard(ws)
-        await broadcast({"type": "lobby", "players": [p.name for p in STATE.players.values()]})
-    except Exception as e:
-        logger.exception("websocket error: %s", e)
+        
+        # Güncel oyuncu listesini yayınla
+        await broadcast({
+            "type": "lobby", 
+            "players": [p.name for p in STATE.players.values() if p.connected]
+        })

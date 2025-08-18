@@ -4,10 +4,59 @@
 
   const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProto}//${location.host}/ws`;
-  const ws = new WebSocket(wsUrl);
+  let ws = null;
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 5;
+
+  // WebSocket bağlantı yönetimi
+  function connectWebSocket() {
+    ws = new WebSocket(wsUrl);
+    
+    ws.addEventListener('open', () => {
+      console.log('WebSocket bağlantısı açıldı');
+      reconnectAttempts = 0;
+      
+      // Admin ise hemen admin moduna geç
+      if (isAdmin) {
+        ws.send(JSON.stringify({ type: 'admin' }));
+      }
+    });
+
+    ws.addEventListener('error', (e) => {
+      console.error('WS error', e);
+    });
+
+    ws.addEventListener('close', (e) => {
+      console.log('WebSocket bağlantısı kapandı', e.code, e.reason);
+      
+      const t = byId('feedback') || byId('loadInfo');
+      if (t) t.textContent = 'Bağlantı koptu. Yeniden bağlanıyor...';
+      
+      // Otomatik yeniden bağlanma
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        setTimeout(() => {
+          console.log(`Yeniden bağlanma denemesi ${reconnectAttempts}/${maxReconnectAttempts}`);
+          connectWebSocket();
+        }, 1000 * reconnectAttempts);
+      } else {
+        if (t) t.textContent = 'Bağlantı koptu. Sayfayı yenileyin.';
+      }
+    });
+
+    // Message handler'ları ekle
+    ws.addEventListener('message', handleWebSocketMessage);
+  }
 
   // ---------- helpers ----------
-  function safeParse(data) { try { return JSON.parse(data); } catch { return null; } }
+  function safeParse(data) { 
+    try { 
+      return JSON.parse(data); 
+    } catch { 
+      return null; 
+    } 
+  }
+
   function handleMessage(event, handlers) {
     const parsed = safeParse(event.data);
     if (!parsed || !parsed.type) return;
@@ -16,7 +65,10 @@
   }
 
   function hideWinner() {
-    document.getElementById('winner-overlay')?.remove();
+    const overlay = document.getElementById('winner-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
   }
 
   function showWinner(name, score) {
@@ -27,7 +79,7 @@
     el.innerHTML = `
       <div class="px-8 py-10 bg-gray-800 rounded-2xl shadow-2xl border border-indigo-600 text-center">
         <div class="text-xs tracking-widest text-indigo-300 mb-2">BİRİNCİ</div>
-        <div class="text-3xl font-extrabold">${name}</div>
+        <div class="text-3xl font-extrabold text-white">${escapeHtml(name)}</div>
         <div class="text-sm text-gray-400">${score} puan</div>
         <div class="mt-4 text-xs text-gray-500">(Kapatmak için tıkla)</div>
       </div>
@@ -35,20 +87,39 @@
     document.body.appendChild(el);
     el.addEventListener('click', hideWinner);
 
+    // Konfeti efekti
     if (window.confetti) {
       const end = Date.now() + 2500;
       (function frame() {
-        confetti({ particleCount: 6, spread: 70, origin: { x: Math.random(), y: 0.2 } });
+        confetti({ 
+          particleCount: 6, 
+          spread: 70, 
+          origin: { x: Math.random(), y: 0.2 } 
+        });
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     }
   }
 
-  ws.addEventListener('error', (e) => console.error('WS error', e));
-  ws.addEventListener('close', () => {
-    const t = byId('feedback') || byId('loadInfo');
-    if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
-  });
+  // XSS koruması için HTML escape
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Safe WebSocket send
+  function safeSend(data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(data));
+      return true;
+    } else {
+      console.warn('WebSocket bağlantısı kapalı, mesaj gönderilemedi:', data);
+      const t = byId('feedback') || byId('loadInfo');
+      if (t) t.textContent = 'Bağlantı sorunu. Lütfen bekleyin...';
+      return false;
+    }
+  }
 
   // ================= Player =================
   if (!isAdmin) {
@@ -67,120 +138,204 @@
 
     let currentExpire = null;
     let countdownInterval = null;
+    let answerSent = false; // Çift gönderim önleme
+    let currentQuestionIndex = -1;
+
+    function clearTimer() {
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }
 
     function setTimer() {
       if (!currentExpire) return;
-      clearInterval(countdownInterval);
+      clearTimer();
+      
       countdownInterval = setInterval(() => {
         const now = Date.now() / 1000;
         const left = Math.max(0, Math.ceil(currentExpire - now));
-        timerEl.textContent = left.toString();
-        if (left <= 0) clearInterval(countdownInterval);
-      }, 200);
+        if (timerEl) timerEl.textContent = left.toString();
+        
+        if (left <= 0) {
+          clearTimer();
+          // Süre doldu, butonları devre dışı bırak
+          const buttons = optionsEl?.querySelectorAll('button');
+          if (buttons) {
+            buttons.forEach(btn => btn.disabled = true);
+          }
+        }
+      }, 100); // Daha hassas timer
     }
 
     function renderOptions(options) {
+      if (!optionsEl) return;
+      
       optionsEl.innerHTML = '';
+      answerSent = false; // Yeni soru geldi, cevap gönderimini sıfırla
+      
       options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.textContent = opt;
+        btn.disabled = false;
+        
+        // Hover efekti
         btn.onmousemove = (e) => {
           const r = e.currentTarget.getBoundingClientRect();
           btn.style.setProperty('--x', (e.clientX - r.left) + 'px');
           btn.style.setProperty('--y', (e.clientY - r.top) + 'px');
         };
+        
+        // Click handler
         btn.onclick = () => {
-          Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.classList.remove('chosen'));
+          // Çift tıklama önleme
+          if (answerSent || btn.disabled) return;
+          
+          // WebSocket bağlantı kontrolü
+          if (!safeSend({ type: 'answer', choice: idx })) {
+            return;
+          }
+          
+          answerSent = true;
+          
+          // UI güncelleme
+          const allButtons = optionsEl.querySelectorAll('button');
+          allButtons.forEach(b => {
+            b.classList.remove('chosen');
+            b.disabled = true;
+          });
           btn.classList.add('chosen');
-          ws.send(JSON.stringify({ type: 'answer', choice: idx }));
-          Array.from(optionsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
         };
+        
         optionsEl.appendChild(btn);
       });
     }
 
-    // join
+    // Join button handler
     joinBtn?.addEventListener('click', () => {
-      const nm = nameInput.value.trim() || 'Misafir';
-      ws.send(JSON.stringify({ type: 'join', name: nm }));
+      const nm = (nameInput?.value || '').trim() || 'Misafir';
+      if (nm.length > 24) {
+        if (feedbackEl) feedbackEl.textContent = 'İsim çok uzun (max 24 karakter)';
+        return;
+      }
+      safeSend({ type: 'join', name: nm });
     });
 
-    // player message handlers
-    ws.addEventListener('message', (event) => handleMessage(event, {
-      joined: (data) => {
-        hideWinner();
-        me.textContent = `Hoş geldin, ${data.name}`;
-        joinSection.classList.add('hidden');
-        gameSection.classList.remove('hidden');
-        infoSection?.classList.add('hidden');
-        feedbackEl.textContent = '';
-      },
+    // Enter tuşu ile join
+    nameInput?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        joinBtn?.click();
+      }
+    });
 
-      question: (data) => {
-        hideWinner();
-        qProgress.textContent = `Soru ${data.index + 1} / ${data.q_total}`;
-        questionEl.textContent = data.question;
-        currentExpire = data.expires_at;
-        infoSection?.classList.add('hidden');
-        setTimer();
-        feedbackEl.textContent = '';
-        leaderboardEl.classList.add('hidden');
-        renderOptions(data.options);
-      },
+    // Player message handlers
+    function handleWebSocketMessage(event) {
+      handleMessage(event, {
+        joined: (data) => {
+          hideWinner();
+          if (me) me.textContent = `Hoş geldin, ${data.name}`;
+          joinSection?.classList.add('hidden');
+          gameSection?.classList.remove('hidden');
+          infoSection?.classList.add('hidden');
+          if (feedbackEl) feedbackEl.textContent = '';
+        },
 
-      answer_ack: (_d) => {},
+        question: (data) => {
+          hideWinner();
+          clearTimer();
+          currentQuestionIndex = data.index;
+          answerSent = false;
+          
+          if (qProgress) qProgress.textContent = `Soru ${data.index + 1} / ${data.q_total}`;
+          if (questionEl) questionEl.textContent = data.question;
+          currentExpire = data.expires_at;
+          infoSection?.classList.add('hidden');
+          if (feedbackEl) feedbackEl.textContent = '';
+          leaderboardEl?.classList.add('hidden');
+          
+          setTimer();
+          renderOptions(data.options);
+        },
 
-      reveal: (d) => {
-        Array.from(optionsEl.children).forEach((b, i) => {
-          b.disabled = true;
-          const wasChosen = b.classList.contains('chosen');
-          b.classList.remove('chosen');
-          if (i === d.correct) {
-            b.classList.add('correct');
-          } else if (wasChosen) {
-            b.classList.add('wrong');
+        answer_ack: (data) => {
+          // Cevap onayı alındı
+          console.log('Cevap kaydedildi:', data);
+        },
+
+        reveal: (data) => {
+          clearTimer();
+          const buttons = optionsEl?.children;
+          if (!buttons) return;
+          
+          Array.from(buttons).forEach((btn, i) => {
+            btn.disabled = true;
+            const wasChosen = btn.classList.contains('chosen');
+            btn.classList.remove('chosen');
+            
+            if (i === data.correct) {
+              btn.classList.add('correct');
+            } else if (wasChosen) {
+              btn.classList.add('wrong');
+            }
+          });
+        },
+
+        leaderboard: (data) => {
+          if (!leaderboardEl) return;
+          
+          leaderboardEl.classList.remove('hidden');
+          const list = data.all || [];
+          
+          leaderboardEl.innerHTML = `
+            <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
+            <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
+              ${list.map(([name, score], i) => `
+                <li class="flex items-center gap-3">
+                  <span class="badge">${i + 1}</span>
+                  <span>${escapeHtml(name)}</span>
+                  <span class="ml-auto font-mono">${score} puan</span>
+                </li>
+              `).join('')}
+            </ol>
+          `;
+
+          // Oyun bittiyse ve kazanan varsa göster
+          if (data.game_over && list.length > 0) {
+            const [winName, winScore] = list[0];
+            setTimeout(() => showWinner(winName, winScore), 500);
           }
-        });
-      },
+        },
 
-      leaderboard: (data) => {
-        // her durumda tabloyu göster
-        leaderboardEl.classList.remove('hidden');
-        const list = data.all || [];
-        leaderboardEl.innerHTML = `
-          <h3 class="text-xl font-bold mb-2">Skor Tablosu</h3>
-          <ol class="space-y-1 max-h-80 overflow-y-auto pr-2">
-            ${list.map(([name, score], i) => `
-              <li class="flex items-center gap-3">
-                <span class="badge">${i + 1}</span>
-                <span>${name}</span>
-                <span class="ml-auto font-mono">${score} puan</span>
-              </li>
-            `).join('')}
-          </ol>
-        `;
+        reset_done: () => {
+          hideWinner();
+          clearTimer();
+          answerSent = false;
+          currentQuestionIndex = -1;
+          
+          if (feedbackEl) feedbackEl.textContent = '';
+          if (optionsEl) optionsEl.innerHTML = '';
+          if (questionEl) questionEl.textContent = '';
+          if (qProgress) qProgress.textContent = '';
+          if (timerEl) timerEl.textContent = '10';
+          leaderboardEl?.classList.add('hidden');
+        },
 
-        // OYUN BİTTİYSE ve en az 1 kişi varsa kazananı konfetiyle göster
-        if (data.game_over && list.length) {
-          const [winName, winScore] = list[0];
-          showWinner(winName, winScore);
+        ping: () => {
+          // Heartbeat response
+          safeSend({ type: 'pong' });
         }
-      },
+      });
+    }
 
-      reset_done: () => {
-        hideWinner();
-        feedbackEl.textContent = '';
-        optionsEl.innerHTML = '';
-        questionEl.textContent = '';
-        qProgress.textContent = '';
-        timerEl.textContent = '10';
-        leaderboardEl.classList.add('hidden');
-      },
-    }));
+    // Sayfa kapanırken temizlik
+    window.addEventListener('beforeunload', () => {
+      clearTimer();
+      if (ws) ws.close();
+    });
   }
 
-  // ================= Admin (değişmedi) =================
+  // ================= Admin =================
   if (isAdmin) {
     const lobby     = byId('lobby');
     const qCount    = byId('qCount');
@@ -191,24 +346,63 @@
     const excelPath = byId('excelPath');
     const loadInfo  = byId('loadInfo');
 
-    ws.addEventListener('open', () => { ws.send(JSON.stringify({ type: 'admin' })); });
-
     function renderLobby(list) {
-      lobby && (lobby.innerHTML = list.map(n => `<li class="px-3 py-2 bg-gray-700 rounded-lg">${n}</li>`).join(''));
+      if (!lobby) return;
+      lobby.innerHTML = list.map(name => 
+        `<li class="px-3 py-2 bg-gray-700 rounded-lg">${escapeHtml(name)}</li>`
+      ).join('');
     }
 
+    // Button handlers
     loadBtn?.addEventListener('click', () => {
-      ws.send(JSON.stringify({ type: 'load_questions', path: (excelPath?.value.trim() || 'questions.xlsx') }));
+      const path = (excelPath?.value || '').trim() || 'questions.xlsx';
+      safeSend({ type: 'load_questions', path: path });
     });
-    startBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'start_quiz' })));
-    nextBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'next' })));
-    resetBtn?.addEventListener('click', () => ws.send(JSON.stringify({ type: 'reset' })));
 
-    ws.addEventListener('message', (event) => handleMessage(event, {
-      admin_ack: (d) => { renderLobby(d.players || []); if (qCount) qCount.textContent = `Soru sayısı: ${d.q_count || 0}`; },
-      lobby: (d) => renderLobby(d.players || []),
-      questions_loaded: (d) => { if (qCount) qCount.textContent = `Soru sayısı: ${d.count}`; if (loadInfo) loadInfo.textContent = `Yüklendi (${d.count}).`; },
-      error: (d) => { if (loadInfo) loadInfo.textContent = `Hata: ${d.message}`; },
-    }));
+    startBtn?.addEventListener('click', () => {
+      safeSend({ type: 'start_quiz' });
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      safeSend({ type: 'next' });
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      if (confirm('Oyunu sıfırlamak istediğinizden emin misiniz?')) {
+        safeSend({ type: 'reset' });
+      }
+    });
+
+    // Admin message handlers
+    function handleWebSocketMessage(event) {
+      handleMessage(event, {
+        admin_ack: (data) => {
+          renderLobby(data.players || []);
+          if (qCount) qCount.textContent = `Soru sayısı: ${data.q_count || 0}`;
+        },
+        
+        lobby: (data) => {
+          renderLobby(data.players || []);
+        },
+        
+        questions_loaded: (data) => {
+          if (qCount) qCount.textContent = `Soru sayısı: ${data.count}`;
+          if (loadInfo) loadInfo.textContent = `Yüklendi (${data.count} soru).`;
+        },
+        
+        error: (data) => {
+          if (loadInfo) loadInfo.textContent = `Hata: ${data.message}`;
+          console.error('Server error:', data.message);
+        },
+
+        ping: () => {
+          // Heartbeat response
+          safeSend({ type: 'pong' });
+        }
+      });
+    }
   }
+
+  // WebSocket bağlantısını başlat
+  connectWebSocket();
 })();

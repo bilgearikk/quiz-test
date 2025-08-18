@@ -1,22 +1,22 @@
-/* Küçük yardımcılar */
+
 .hidden { display: none; }
 
-/* Cevap butonları */
+
 .option-btn{
   position: relative;
   width: 100%;
   padding: 14px 16px;
   border-radius: 14px;
-  background: #1f2937;                 /* gray-800 */
+  background: #1f2937;                
   color: #fff;
   border: 1px solid transparent;
   overflow: hidden;
   transition: transform .15s ease, border-color .15s ease, background-color .15s ease;
 }
-.option-btn:hover{ border-color:#4F46E5; } /* indigo-600 */
+.option-btn:hover{ border-color:#4F46E5; } 
 .option-btn:disabled{ opacity:.8; cursor:not-allowed; }
 
-/* hover parıltısı */
+
 .option-btn::before{
   content:"";
   position:absolute; left: var(--x, 50%); top: var(--y, 50%);
@@ -27,29 +27,27 @@
 }
 .option-btn:hover::before{ width:180%; height:180%; }
 
-/* seçim vurgusu */
+
 .option-btn.chosen{ outline:2px solid #A78BFA; transform: translateY(-1px); } /* violet-400 */
 
-/* doğru/yanlış */
+
 .option-btn.correct{
-  border-color:#10B981;                 /* emerald-500 */
+  border-color:#10B981;                
   background: rgba(16,185,129,.12);
 }
 .option-btn.wrong{
-  border-color:#EF4444;                 /* red-500 */
+  border-color:#EF4444;               
   background: rgba(239,68,68,.10);
 }
 
-/* sıralama rozeti */
 .badge{
   display:inline-flex; align-items:center; justify-content:center;
   width:28px; height:28px; border-radius:9999px;
-  background:#312e81;                   /* indigo-900 */
-  color:#c7d2fe;                        /* indigo-200 */
+  background:#312e81;                   
+  color:#c7d2fe;                        
   font-weight:700; font-size:.85rem;
 }
 
-/* Winner overlay */
 .winner-banner{
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
@@ -58,8 +56,8 @@
   z-index: 60;
 }
 .banner-card{
-  background: #111827;                  /* gray-900 */
-  border: 1px solid #4F46E5;            /* indigo-600 */
+  background: #111827;                  
+  border: 1px solid #4F46E5;            
   border-radius: 1rem;
   padding: 1.25rem 1.75rem;
   box-shadow: 0 12px 40px rgba(0,0,0,.5);
@@ -69,10 +67,12 @@
   font-size: .9rem;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #A5B4FC;                        /* indigo-300 */
+  color: #A5B4FC;                       
 }
 .banner-card .name{
   margin-top: .25rem;
   font-size: 2rem;
   font-weight: 800;
 }
+
+
