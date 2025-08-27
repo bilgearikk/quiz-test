@@ -100,7 +100,6 @@ def load_questions_from_excel(path: str) -> List[dict]:
 
 
 def score_for_elapsed(elapsed: float) -> int:
-    # 0-3s => 5, 3-5s => 3, 5-10s => 2, >10 => 0
     if elapsed <= 3.0:
         return 5
     elif elapsed <= 5.0:
@@ -173,7 +172,7 @@ async def end_current_question():
     if STATE.current_q_index + 1 < len(STATE.questions):
         await start_question(STATE.current_q_index + 1)
     else:
-        # Oyun bitti: tüm oyuncuları puana göre sırala (puan desc, isim asc)
+       
         leaderboard = sorted(
             ((p.name, p.score) for p in STATE.players.values()),
             key=lambda x: (-x[1], x[0].lower())
@@ -181,7 +180,7 @@ async def end_current_question():
         await broadcast({
             "type": "leaderboard",
             "all": list(leaderboard),
-            "game_over": True  # <— sadece finalde geliyor; ön yüzde bununla kazanan gösterilecek
+            "game_over": True 
         })
 
 

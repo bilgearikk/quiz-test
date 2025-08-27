@@ -6,7 +6,7 @@
   const wsUrl = `${wsProto}//${location.host}/ws`;
   const ws = new WebSocket(wsUrl);
 
-  // ---------- helpers ----------
+ 
   function safeParse(data) { try { return JSON.parse(data); } catch { return null; } }
   function handleMessage(event, handlers) {
     const parsed = safeParse(event.data);
@@ -50,7 +50,7 @@
     if (t) t.textContent = 'Bağlantı kapandı. Sayfayı yenileyin.';
   });
 
-  // ================= Player =================
+  
   if (!isAdmin) {
     const joinSection   = byId('join-section');
     const gameSection   = byId('game-section');
@@ -100,13 +100,13 @@
       });
     }
 
-    // join
+    
     joinBtn?.addEventListener('click', () => {
       const nm = nameInput.value.trim() || 'Misafir';
       ws.send(JSON.stringify({ type: 'join', name: nm }));
     });
 
-    // player message handlers
+    
     ws.addEventListener('message', (event) => handleMessage(event, {
       joined: (data) => {
         hideWinner();
@@ -145,7 +145,7 @@
       },
 
       leaderboard: (data) => {
-        // her durumda tabloyu göster
+       
         leaderboardEl.classList.remove('hidden');
         const list = data.all || [];
         leaderboardEl.innerHTML = `
@@ -161,7 +161,7 @@
           </ol>
         `;
 
-        // OYUN BİTTİYSE ve en az 1 kişi varsa kazananı konfetiyle göster
+      
         if (data.game_over && list.length) {
           const [winName, winScore] = list[0];
           showWinner(winName, winScore);
@@ -180,7 +180,6 @@
     }));
   }
 
-  // ================= Admin (değişmedi) =================
   if (isAdmin) {
     const lobby     = byId('lobby');
     const qCount    = byId('qCount');

@@ -6,7 +6,6 @@
   <title>Hasçelik IT Bilgi Yarışması</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css" />
-  <!-- Konfeti (sadece oyun sonunda kullanılacak) -->
   <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body class="min-h-screen bg-gray-900 text-white">
@@ -16,7 +15,6 @@
       <span id="me" class="text-sm text-gray-300"></span>
     </header>
 
-    <!-- Katılım -->
     <section id="join-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg">
       <h2 class="text-xl font-semibold mb-2">Odaya Katıl</h2>
       <p class="text-gray-300 mb-4">İsmini yaz ve oyuna katıl.</p>
@@ -27,7 +25,6 @@
       </div>
     </section>
 
-    <!-- Bilgi kutusu (sadece girişte görünür) -->
     <section id="info-section" class="bg-gray-800 rounded-2xl p-6 shadow-lg mt-6">
       <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
@@ -41,7 +38,7 @@
       </div>
     </section>
 
-    <!-- Oyun alanı -->
+    
     <section id="game-section" class="hidden mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg">
       <div class="flex items-center justify-between">
         <div>
@@ -57,7 +54,7 @@
       <div id="options" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
       <div id="feedback" class="mt-4 text-sm"></div>
 
-      <!-- Skor tablosu -->
+     
       <div id="leaderboard" class="hidden mt-6"></div>
     </section>
   </div>
