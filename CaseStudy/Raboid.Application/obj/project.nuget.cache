@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "F15QTGiiOLA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\softw\\.nuget\\packages\\mongodb.bson\\3.5.0\\mongodb.bson.3.5.0.nupkg.sha512",
+    "C:\\Users\\softw\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
+    "C:\\Users\\softw\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

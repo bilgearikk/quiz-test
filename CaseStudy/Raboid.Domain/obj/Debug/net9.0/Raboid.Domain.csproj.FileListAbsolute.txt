@@ -1,0 +1,13 @@
+C:\Users\softw\CaseStudy\Raboid.Domain\bin\Debug\net9.0\Raboid.Domain.deps.json
+C:\Users\softw\CaseStudy\Raboid.Domain\bin\Debug\net9.0\Raboid.Domain.dll
+C:\Users\softw\CaseStudy\Raboid.Domain\bin\Debug\net9.0\Raboid.Domain.pdb
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.csproj.AssemblyReference.cache
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.AssemblyInfoInputs.cache
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.AssemblyInfo.cs
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.csproj.CoreCompileInputs.cache
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.sourcelink.json
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.dll
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\refint\Raboid.Domain.dll
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\Raboid.Domain.pdb
+C:\Users\softw\CaseStudy\Raboid.Domain\obj\Debug\net9.0\ref\Raboid.Domain.dll

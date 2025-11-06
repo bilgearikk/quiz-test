@@ -1,0 +1,377 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\softw\\CaseStudy\\Raboid.MockClient\\Raboid.MockClient.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\Raboid.Api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\Raboid.Api.csproj",
+        "projectName": "Raboid.Api",
+        "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\Raboid.Api.csproj",
+        "packagesPath": "C:\\Users\\softw\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\softw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj"
+              },
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj"
+              },
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\Raboid.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\Raboid.Infrastructure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[8.14.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.4.0, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.14.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj",
+        "projectName": "Raboid.Application",
+        "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj",
+        "packagesPath": "C:\\Users\\softw\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\softw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj",
+        "projectName": "Raboid.Domain",
+        "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj",
+        "packagesPath": "C:\\Users\\softw\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\softw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "MongoDB.Bson": {
+              "target": "Package",
+              "version": "[3.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\Raboid.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\Raboid.Infrastructure.csproj",
+        "projectName": "Raboid.Infrastructure",
+        "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\Raboid.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\softw\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Infrastructure\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\softw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Application\\Raboid.Application.csproj"
+              },
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Domain\\Raboid.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Options": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[3.5.0, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.14.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\softw\\CaseStudy\\Raboid.MockClient\\Raboid.MockClient.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\softw\\CaseStudy\\Raboid.MockClient\\Raboid.MockClient.csproj",
+        "projectName": "Raboid.MockClient",
+        "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.MockClient\\Raboid.MockClient.csproj",
+        "packagesPath": "C:\\Users\\softw\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\softw\\CaseStudy\\Raboid.MockClient\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\softw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\Raboid.Api.csproj": {
+                "projectPath": "C:\\Users\\softw\\CaseStudy\\Raboid.Api\\Raboid.Api.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

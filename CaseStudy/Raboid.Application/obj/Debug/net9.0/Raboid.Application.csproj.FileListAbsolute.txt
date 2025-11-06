@@ -1,0 +1,16 @@
+C:\Users\softw\CaseStudy\Raboid.Application\bin\Debug\net9.0\Raboid.Application.deps.json
+C:\Users\softw\CaseStudy\Raboid.Application\bin\Debug\net9.0\Raboid.Application.dll
+C:\Users\softw\CaseStudy\Raboid.Application\bin\Debug\net9.0\Raboid.Application.pdb
+C:\Users\softw\CaseStudy\Raboid.Application\bin\Debug\net9.0\Raboid.Domain.dll
+C:\Users\softw\CaseStudy\Raboid.Application\bin\Debug\net9.0\Raboid.Domain.pdb
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.csproj.AssemblyReference.cache
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.AssemblyInfoInputs.cache
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.AssemblyInfo.cs
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.csproj.CoreCompileInputs.cache
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.sourcelink.json
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.A.0D5457E8.Up2Date
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.dll
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\refint\Raboid.Application.dll
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\Raboid.Application.pdb
+C:\Users\softw\CaseStudy\Raboid.Application\obj\Debug\net9.0\ref\Raboid.Application.dll

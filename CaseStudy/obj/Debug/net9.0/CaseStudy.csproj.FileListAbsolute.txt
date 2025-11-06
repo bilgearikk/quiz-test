@@ -1,0 +1,6 @@
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.csproj.AssemblyReference.cache
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.AssemblyInfoInputs.cache
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.AssemblyInfo.cs
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.csproj.CoreCompileInputs.cache
+C:\Users\softw\CaseStudy\obj\Debug\net9.0\CaseStudy.sourcelink.json
